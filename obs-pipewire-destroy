@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# See ~/.local/bin/obs-pipewire-setup
+
+SINK_ID_LOCATION="$HOME/.local/share/obs-pipewire"
+
+# Check for sinks
+if [[ ! -f "${SINK_ID_LOCATION}/OBS-Mic.id" ]]; then
+    echo "No link IDs found. Use obs-pipewire-setup first."
+    echo "If the link IDs are unknown, use 'pactl unload-module module-null-sink'."
+    exit 1
+fi
+
+# Find sink IDs
+OBS_PIPEWIRE_SINKS_MIC=$( cat "${SINK_ID_LOCATION}/OBS-Mic.id")
+OBS_PIPEWIRE_SINKS_CHAT=$(cat "${SINK_ID_LOCATION}/OBS-Chat.id")
+OBS_PIPEWIRE_SINKS_GAME=$(cat "${SINK_ID_LOCATION}/OBS-Game.id")
+
+# Destroy sinks
+pactl unload-module "${OBS_PIPEWIRE_SINKS_MIC}"
+pactl unload-module "${OBS_PIPEWIRE_SINKS_CHAT}"
+pactl unload-module "${OBS_PIPEWIRE_SINKS_GAME}"
+
+# Remove files
+rm "${SINK_ID_LOCATION}/OBS-Mic.id"
+rm "${SINK_ID_LOCATION}/OBS-Chat.id"
+rm "${SINK_ID_LOCATION}/OBS-Game.id"

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Sets up three audio sinks, and links accordingly to mic and headset.
+
+# Links between games and sinks is left up to manual config.
+# Links between sinks and OBS is left up to OBS.
+
+# Device names can be gotten from 'pw-link -o' and 'pw-link -i'
+MIC_DEVICE="alsa_input.usb-Generic_Realtek_Audio_USB_201701110001-00.analog-stereo"
+HEADSET_DEVICE="jamesdsp_sink"
+#HEADSET_DEVICE="alsa_output.usb-Logitech_G733_Gaming_Headset-00.analog-stereo"
+
+SINK_ID_LOCATION="$HOME/.local/share/obs-pipewire"
+
+mkdir -p "${SINK_ID_LOCATION}"
+
+echo "Creating sinks"
+OBS_PIPEWIRE_SINKS_MIC=$( pactl load-module module-null-sink media.class=Audio/Source/Virtual sink_name=OBS-Mic  channel_map=stereo)
+OBS_PIPEWIRE_SINKS_CHAT=$(pactl load-module module-null-sink media.class=Audio/Sink           sink_name=OBS-Chat channel_map=stereo)
+OBS_PIPEWIRE_SINKS_GAME=$(pactl load-module module-null-sink media.class=Audio/Sink           sink_name=OBS-Game channel_map=stereo)
+
+echo "Linking mic to OBS-Mic"
+pw-link "${MIC_DEVICE}":capture_FL OBS-Mic:input_FL
+pw-link "${MIC_DEVICE}":capture_FR OBS-Mic:input_FR
+
+echo "Linking OBS-Chat and OBS-Game to output"
+pw-link OBS-Chat:monitor_FL "${HEADSET_DEVICE}":playback_FL
+pw-link OBS-Chat:monitor_FR "${HEADSET_DEVICE}":playback_FR
+pw-link OBS-Game:monitor_FL "${HEADSET_DEVICE}":playback_FL
+pw-link OBS-Game:monitor_FR "${HEADSET_DEVICE}":playback_FR
+
+echo "Saving module IDs to disk: ${SINK_ID_LOCATION}/OBS-*.id"
+mkdir -p "${SINK_ID_LOCATION}"
+echo "${OBS_PIPEWIRE_SINKS_MIC}"  > "${SINK_ID_LOCATION}/OBS-Mic.id"
+echo "${OBS_PIPEWIRE_SINKS_CHAT}" > "${SINK_ID_LOCATION}/OBS-Chat.id"
+echo "${OBS_PIPEWIRE_SINKS_GAME}" > "${SINK_ID_LOCATION}/OBS-Game.id"
+
+echo "---"
+echo "Done. Link games with OBS-Game and voice calls with OBS-Chat."
+echo "Use obs-pipewire-destroy to destroy these sinks."
